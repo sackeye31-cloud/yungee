@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>AfroDownload • upload & stream</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0b081a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      flex-direction: column;
+    }
+    .run-wrapper {
+      max-width: 430px;
+      width: 100%;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .run-btn {
+      background: linear-gradient(135deg, #ff2f92, #8b2cff);
+      border: none;
+      padding: 18px 48px;
+      border-radius: 60px;
+      color: white;
+      font-weight: 700;
+      font-size: 1.4rem;
+      cursor: pointer;
+      box-shadow: 0 0 40px #8b2cff88, 0 8px 32px rgba(0,0,0,0.6);
+      transition: 0.3s;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      animation: pulse 2s infinite;
+      width: 100%;
+      justify-content: center;
+    }
+    .run-btn:hover { transform: scale(1.05); box-shadow: 0 0 60px #ff2f92aa, 0 8px 32px rgba(0,0,0,0.6); }
+    .run-btn i { font-size: 1.6rem; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+    .app-container {
+      max-width: 430px;
+      width: 100%;
+      background: #080712;
+      border-radius: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      overflow: hidden;
+      position: relative;
+      height: 780px;
+      display: none;
+      flex-direction: column;
+      transition: all 0.3s ease;
+    }
+    .app-container.open { display: flex; }
+    .screens {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 80px 16px;
+      scroll-behavior: smooth;
+    }
+    .screen { display: none; animation: fadeUp 0.25s ease; }
+    .screen.active { display: block; }
+    @keyframes fadeUp { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+    #splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: 20px;
+      background: #080712;
+    }
+    #splash .logo-icon { font-size: 72px; color: #ff2f92; margin-bottom: 8px; filter: drop-shadow(0 0 20px #8b2cff66); }
+    #splash h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ff2f92, #8b2cff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    #splash .tagline { font-size: 1.2rem; color: #ff8a2a; font-weight: 500; margin-top: 4px; }
+    #splash .sub { color: #9a3b5f; margin-top: 16px; font-weight: 400; letter-spacing: 2px; }
+    .bottom-nav {
+      background: #151122;
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 8px 8px 12px 8px;
+      border-top: 1px solid #2a1f3a;
+      flex-shrink: 0;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #9a3b5f;
+      font-size: 12px;
+      transition: 0.2s;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 30px;
+    }
+    .nav-item i { font-size: 22px; margin-bottom: 2px; }
+    .nav-item.active { color: #ff2f92; font-weight: 600; }
+    .nav-item.active i { text-shadow: 0 0 16px #ff2f92; }
+    .section-title {
+      color: white;
+      font-weight: 600;
+      font-size: 1.2rem;
+      margin: 20px 0 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-row {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+    }
+    .card-row::-webkit-scrollbar { height: 3px; background: #1f1830; }
+    .card-row::-webkit-scrollbar-thumb { background: #ff2f92; border-radius: 10px; }
+    .song-card {
+      background: #151122;
+      border-radius: 20px;
+      padding: 12px;
+      min-width: 140px;
+      max-width: 160px;
+      flex-shrink: 0;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+      transition: 0.2s;
+    }
+    .song-card .cover {
+      width: 100%;
+      aspect-ratio: 1/1;
+      background: linear-gradient(145deg, #2a1f3a, #1b142b);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9a3b5f;
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .song-card .title { color: white; font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .song-card .artist { color: #9a3b5f; font-size: 0.75rem; }
+    .song-card .actions { display: flex; justify-content: space-between; margin-top: 8px; align-items: center; }
+    .btn-icon { background: none; border: none; color: #ff2f92; font-size: 18px; cursor: pointer; padding: 4px; }
+    .btn-icon:hover { transform: scale(1.1); }
+    .btn-primary {
+      background: linear-gradient(135deg, #ff2f92, #8b2cff);
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.8; transform: scale(0.97); }
+    .search-bar {
+      background: #151122;
+      border-radius: 40px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #2a1f3a;
+    }
+    .search-bar input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 1rem; }
+    .search-bar input::placeholder { color: #9a3b5f; }
+    .filter-tabs {
+      display: flex;
+      gap: 10px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .filter-tabs span {
+      background: #151122;
+      padding: 6px 16px;
+      border-radius: 40px;
+      color: #9a3b5f;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .filter-tabs span.active { background: #ff2f92; color: white; }
+    .music-player {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #080712;
+      z-index: 999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+    .music-player.open { display: flex; }
+    .player-art {
+      width: 240px;
+      height: 240px;
+      background: linear-gradient(145deg, #2a1f3a, #1b142b);
+      border-radius: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 72px;
+      color: #ff2f92;
+      margin-bottom: 20px;
+    }
+    .player-title { color: white; font-size: 1.6rem; font-weight: 700; }
+    .player-artist { color: #9a3b5f; font-size: 1rem; margin-bottom: 12px; }
+    .progress-container {
+      width: 100%;
+      max-width: 300px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #9a3b5f;
+      font-size: 0.75rem;
+    }
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: #2a1f3a;
+      border-radius: 10px;
+      appearance: none;
+    }
+    .progress-bar::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; background: #ff2f92; border-radius: 50%; cursor: pointer; }
+    .player-controls {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      margin: 20px 0;
+    }
+    .player-controls button { background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
+    .player-controls .play-btn {
+      background: #ff2f92;
+      width: 64px;
+      height: 64px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 30px;
+      box-shadow: 0 0 24px #ff2f9266;
+    }
+    .player-extra {
+      display: flex;
+      gap: 30px;
+      margin-top: 12px;
+      color: #9a3b5f;
+    }
+    .player-extra button { background: none; border: none; color: #9a3b5f; font-size: 18px; cursor: pointer; }
+    .close-player { position: absolute; top: 24px; right: 24px; background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #151122;
+      max-width: 340px;
+      width: 100%;
+      border-radius: 32px;
+      padding: 24px;
+      color: white;
+      animation: fadeUp 0.3s;
+    }
+    .modal h3 { margin-bottom: 6px; }
+    .modal .sub { color: #9a3b5f; margin-bottom: 16px; }
+    .quality-option { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #2a1f3a; }
+    .lib-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .lib-card { background: #151122; border-radius: 20px; padding: 16px; text-align: center; }
+    .lib-card i { font-size: 32px; color: #ff2f92; }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 12px 0;
+    }
+    .profile-avatar {
+      width: 72px; height: 72px;
+      background: #2a1f3a;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: #ff2f92;
+    }
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin: 16px 0;
+    }
+    .stats div { text-align: center; color: white; }
+    .stats span { color: #9a3b5f; font-size: 0.75rem; }
+    .menu-item {
+      padding: 14px 0;
+      border-bottom: 1px solid #1f1830;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+    }
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 20px;
+      right: 20px;
+      background: #151122;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 40px;
+      text-align: center;
+      max-width: 400px;
+      margin: 0 auto;
+      border-left: 4px solid #ff2f92;
+      display: none;
+      z-index: 2000;
+    }
+    .toast.show { display: block; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .mt-8 { margin-top: 8px; }
+    .mb-8 { margin-bottom: 8px; }
+    .gap-8 { gap: 8px; }
+    .text-muted { color: #9a3b5f; }
+
+    /* UPLOAD SECTION */
+    .upload-area {
+      background: #151122;
+      border: 2px dashed #2a1f3a;
+      border-radius: 24px;
+      padding: 24px 16px;
+      text-align: center;
+      margin: 16px 0;
+      transition: 0.3s;
+    }
+    .upload-area.dragover { border-color: #ff2f92; background: #1f1830; }
+    .upload-area i { font-size: 48px; color: #ff2f92; margin-bottom: 8px; }
+    .upload-area p { color: #9a3b5f; margin-bottom: 12px; }
+    .upload-area input[type="file"] { display: none; }
+    .upload-progress {
+      width: 100%;
+      height: 4px;
+      background: #2a1f3a;
+      border-radius: 10px;
+      margin: 12px 0;
+      display: none;
+    }
+    .upload-progress .bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff2f92, #8b2cff);
+      border-radius: 10px;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .uploaded-songs {
+      margin-top: 12px;
+    }
+    .uploaded-song {
+      background: #1f1830;
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+    .uploaded-song .info { flex: 1; }
+    .uploaded-song .info .title { font-weight: 600; }
+    .uploaded-song .info .artist { font-size: 0.75rem; color: #9a3b5f; }
+    .uploaded-song .actions button { color: #9a3b5f; margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <!-- RUN BUTTON -->
+  <div class="run-wrapper">
+    <button class="run-btn" id="runAppBtn">
+      <i class="fas fa-play"></i> Launch AfroDownload
+    </button>
+  </div>
+
+  <!-- APP CONTAINER -->
+  <div class="app-container" id="app">
+    <!-- splash -->
+    <div id="splash" class="screen active">
+      <div class="logo-icon"><i class="fas fa-music"></i></div>
+      <h1>AfroDownload</h1>
+      <div class="tagline">Discover. Stream. Download.</div>
+      <div class="sub">Afro music. Our sound. Our pride.</div>
+    </div>
+
+    <!-- screens -->
+    <div class="screens" id="screensContainer">
+      <!-- HOME -->
+      <div id="home" class="screen">
+        <div class="flex-between"><div><h2 style="color:white;">Hello, Emmanuel</h2><span class="text-muted">What are you listening to?</span></div><i class="fas fa-bell" style="color:#ff2f92;font-size:22px;"></i></div>
+        <div class="section-title">New Release <span class="text-muted" style="font-size:0.8rem;">See all</span></div>
+        <div class="card-row" id="newReleaseRow"></div>
+        <div class="section-title">Trending Now</div>
+        <div class="card-row" id="trendingRow"></div>
+        <div class="section-title">Recommended for You</div>
+        <div class="card-row" id="recommendedRow"></div>
+        <div class="section-title">Your Uploads <span class="text-muted" style="font-size:0.8rem;" id="uploadCount">0</span></div>
+        <div class="card-row" id="uploadRow"></div>
+      </div>
+
+      <!-- SEARCH -->
+      <div id="search" class="screen">
+        <div class="search-bar"><i class="fas fa-search" style="color:#9a3b5f;"></i><input type="text" id="searchInput" placeholder="Search songs, artists, albums..."></div>
+        <div class="filter-tabs" id="filterTabs"><span class="active">All</span><span>Songs</span><span>Artists</span><span>Albums</span><span>Playlists</span></div>
+        <div id="searchResults"></div>
+      </div>
+
+      <!-- LIBRARY -->
+      <div id="library" class="screen">
+        <h2 style="color:white;">Library</h2>
+        <div class="lib-grid">
+          <div class="lib-card"><i class="fas fa-heart"></i><div>Favorites</div><span class="text-muted" id="favCount">0</span></div>
+          <div class="lib-card"><i class="fas fa-list"></i><div>Playlists</div><span class="text-muted" id="playlistCount">0</span></div>
+          <div class="lib-card"><i class="fas fa-clock"></i><div>Recently Played</div></div>
+          <div class="lib-card"><i class="fas fa-compact-disc"></i><div>Albums</div></div>
+          <div class="lib-card"><i class="fas fa-user"></i><div>Artists</div></div>
+          <div class="lib-card"><i class="fas fa-upload"></i><div>Uploads</div><span class="text-muted" id="uploadLibCount">0</span></div>
+        </div>
+        <div class="section-title">Favorites</div>
+        <div id="favoritesList"></div>
+      </div>
+
+      <!-- DOWNLOADS -->
+      <div id="downloads" class="screen">
+        <h2 style="color:white;">My Downloads</h2>
+        <div class="flex-between text-muted"><span id="downloadCount">0 songs</span><span id="storageEstimate">0 MB</span></div>
+        <div id="downloadsList"></div>
+      </div>
+
+      <!-- PROFILE -->
+      <div id="profile" class="screen">
+        <div class="profile-header"><div class="profile-avatar"><i class="fas fa-user"></i></div><div><h3 style="color:white;">Emmanuel Sackey</h3><span class="text-muted">@emmanuelsackey <i class="fas fa-check-circle" style="color:#ff2f92;"></i></span></div></div>
+        <div class="stats"><div><div>12</div><span>Playlists</span></div><div><div id="profileFavs">0</div><span>Favorites</span></div><div><div id="profileDownloads">0</div><span>Downloads</span></div><div><div id="profileUploads">0</div><span>Uploads</span></div></div>
+        <div class="menu-item">Account <i class="fas fa-chevron-right text-muted"></i></div>
+        <div class="menu-item">Subscription <i class="fas fa-chevron-right text-muted"></i></div>
+        <div class="menu-item">Download Quality <i class="fas fa-chevron-right text-muted"></i></div>
+        <div class="menu-item">Payment Methods <i class="fas fa-chevron-right text-muted"></i></div>
+        <div class="menu-item">Help & Support <i class="fas fa-chevron-right text-muted"></i></div>
+        <div class="menu-item">About AfroDownload <i class="fas fa-chevron-right text-muted"></i></div>
+        <div class="menu-item" style="color:#ff2f92;">Log Out</div>
+      </div>
+    </div>
+
+    <!-- bottom nav -->
+    <div class="bottom-nav" id="bottomNav">
+      <div class="nav-item active" data-screen="home"><i class="fas fa-home"></i><span>Home</span></div>
+      <div class="nav-item" data-screen="search"><i class="fas fa-search"></i><span>Search</span></div>
+      <div class="nav-item" data-screen="library"><i class="fas fa-book"></i><span>Library</span></div>
+      <div class="nav-item" data-screen="downloads"><i class="fas fa-download"></i><span>Downloads</span></div>
+      <div class="nav-item" data-screen="profile"><i class="fas fa-user"></i><span>Profile</span></div>
+    </div>
+
+    <!-- music player overlay -->
+    <div class="music-player" id="musicPlayer">
+      <button class="close-player" id="closePlayer"><i class="fas fa-times"></i></button>
+      <div class="player-art" id="playerArt"><i class="fas fa-music"></i></div>
+      <div class="player-title" id="playerTitle">Song Title</div>
+      <div class="player-artist" id="playerArtist">Artist</div>
+      <div class="progress-container"><span id="currentTime">0:00</span><input type="range" class="progress-bar" id="progressBar" min="0" max="100" value="0"><span id="totalDuration">3:30</span></div>
+      <div class="player-controls">
+        <button id="shuffleBtn"><i class="fas fa-random"></i></button>
+        <button id="prevBtn"><i class="fas fa-step-backward"></i></button>
+        <button class="play-btn" id="playerPlayBtn"><i class="fas fa-play"></i></button>
+        <button id="nextBtn"><i class="fas fa-step-forward"></i></button>
+        <button id="repeatBtn"><i class="fas fa-redo"></i></button>
+      </div>
+      <div class="player-extra">
+        <button id="favBtn"><i class="far fa-heart"></i></button>
+        <button id="lyricsBtn"><i class="fas fa-scroll"></i></button>
+        <button id="addPlaylistBtn"><i class="fas fa-plus-circle"></i></button>
+        <button id="downloadBtn"><i class="fas fa-download"></i></button>
+      </div>
+    </div>
+
+    <!-- download modal -->
+    <div class="modal-overlay" id="downloadModal">
+      <div class="modal">
+        <h3 id="modalSongTitle">Song</h3>
+        <div class="sub" id="modalArtist">Artist</div>
+        <div class="quality-option">High - 320 kbps <span>~8 MB</span></div>
+        <div class="quality-option">Medium - 192 kbps <span>~5 MB</span></div>
+        <div class="quality-option">Low - 128 kbps <span>~3 MB</span></div>
+        <button class="btn-primary" style="width:100%;margin-top:16px;" id="confirmDownloadBtn">Download</button>
+        <button style="background:none;border:none;color:#9a3b5f;margin-top:8px;width:100%;" id="closeModalBtn">Cancel</button>
+      </div>
+    </div>
+
+    <!-- toast -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+<script>
+  (function(){
+    // ----- DATA -----
+    let songs = [
+      { id: 1, title: "Sika Aba Fie", artist: "Kweku Darlington", cover: "🎵", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", duration: "3:28", album: "Sika Aba Fie", category: "Afrobeats", isUpload: false },
+      { id: 2, title: "Odo Nti", artist: "Stonebwyo", cover: "🎶", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3", duration: "3:15", album: "Odo", category: "Afrobeats", isUpload: false },
+      { id: 3, title: "Jejereje", artist: "King Promise", cover: "🎧", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3", duration: "3:42", album: "Jejereje", category: "Afro", isUpload: false },
+      { id: 4, title: "Terminator", artist: "King Promise", cover: "🔥", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3", duration: "3:20", album: "Terminator", category: "Afro", isUpload: false },
+      { id: 5, title: "Aseda", artist: "KiDi", cover: "🌟", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3", duration: "3:50", album: "Aseda", category: "Afrobeats", isUpload: false },
+      { id: 6, title: "CCTV", artist: "King Promise", cover: "📹", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3", duration: "3:05", album: "CCTV", category: "Afro", isUpload: false },
+      { id: 7, title: "Tokyo", artist: "King Promise", cover: "🗼", audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3", duration: "3:30", album: "Tokyo", category: "Afro", isUpload: false },
+    ];
+
+    // Load uploaded songs from localStorage
+    let uploadedSongs = JSON.parse(localStorage.getItem('afroUploads')) || [];
+    // Merge uploaded songs with default songs (uploaded songs get IDs starting from 100)
+    function getAllSongs() {
+      const defaultSongs = songs.filter(s => !s.isUpload);
+      return [...defaultSongs, ...uploadedSongs];
+    }
+
+    // state
+    let currentSongIndex = 0;
+    let isPlaying = false;
+    let audio = new Audio();
+    let currentSongId = null;
+    let favorites = JSON.parse(localStorage.getItem('afroFavorites')) || [];
+    let downloads = JSON.parse(localStorage.getItem('afroDownloads')) || [];
+    let playlists = JSON.parse(localStorage.getItem('afroPlaylists')) || [{name:"My Favorites", songs:[]}];
+    let recentlyPlayed = JSON.parse(localStorage.getItem('afroRecent')) || [];
+
+    // DOM refs
+    const appContainer = document.getElementById('app');
+    const runBtn = document.getElementById('runAppBtn');
+    const screens = document.querySelectorAll('.screen');
+    const navItems = document.querySelectorAll('.nav-item');
+    const splash = document.getElementById('splash');
+    const homeScreen = document.getElementById('home');
+    const player = document.getElementById('musicPlayer');
+    const closePlayer = document.getElementById('closePlayer');
+    const playerPlayBtn = document.getElementById('playerPlayBtn');
+    const progressBar = document.getElementById('progressBar');
+    const currentTimeSpan = document.getElementById('currentTime');
+    const totalDurationSpan = document.getElementById('totalDuration');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const favBtn = document.getElementById('favBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const modal = document.getElementById('downloadModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const confirmDownloadBtn = document.getElementById('confirmDownloadBtn');
+    const toast = document.getElementById('toast');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const favoritesList = document.getElementById('favoritesList');
+    const downloadsList = document.getElementById('downloadsList');
+    const downloadCount = document.getElementById('downloadCount');
+    const storageEstimate = document.getElementById('storageEstimate');
+    const profileFavs = document.getElementById('profileFavs');
+    const profileDownloads = document.getElementById('profileDownloads');
+    const profileUploads = document.getElementById('profileUploads');
+    const favCount = document.getElementById('favCount');
+    const playlistCount = document.getElementById('playlistCount');
+    const uploadCount = document.getElementById('uploadCount');
+    const uploadLibCount = document.getElementById('uploadLibCount');
+    const uploadRow = document.getElementById('uploadRow');
+
+    // ---- helpers ----
+    function showScreen(id) {
+      screens.forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if (id === 'library') renderLibrary();
+      if (id === 'downloads') renderDownloads();
+      if (id === 'profile') { 
+        profileFavs.textContent = favorites.length; 
+        profileDownloads.textContent = downloads.length;
+        profileUploads.textContent = uploadedSongs.length;
+      }
+      if (id === 'home') renderAllCards();
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    // render song cards
+    function renderSongCards(containerId, songList) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      if (!songList || songList.length === 0) {
+        container.innerHTML = '<div class="text-muted" style="padding:12px 0;">No songs yet</div>';
+        return;
+      }
+      songList.forEach(song => {
+        const card = document.createElement('div');
+        card.className = 'song-card';
+        card.innerHTML = `
+          <div class="cover">${song.cover || '🎵'}</div>
+          <div class="title">${song.title}</div>
+          <div class="artist">${song.artist}</div>
+          <div class="actions">
+            <button class="btn-icon play-card" data-id="${song.id}"><i class="fas fa-play"></i></button>
+            <button class="btn-icon options-card" data-id="${song.id}"><i class="fas fa-ellipsis-v"></i></button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      container.querySelectorAll('.play-card').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(btn.dataset.id);
+          const allSongs = getAllSongs();
+          const song = allSongs.find(s => s.id === id);
+          if (song) playSong(song);
+        });
+      });
+    }
+
+    function renderAllCards() {
+      const allSongs = getAllSongs();
+      renderSongCards('newReleaseRow', allSongs.slice(0,3));
+      renderSongCards('trendingRow', allSongs.slice(2,5));
+      renderSongCards('recommendedRow', allSongs.slice(4,7));
+      const uploads = uploadedSongs;
+      renderSongCards('uploadRow', uploads);
+      uploadCount.textContent = uploads.length;
+      uploadLibCount.textContent = uploads.length;
+    }
+
+    // play song
+    function playSong(song) {
+      if (!song) return;
+      currentSongId = song.id;
+      document.getElementById('playerTitle').textContent = song.title;
+      document.getElementById('playerArtist').textContent = song.artist;
+      document.getElementById('playerArt').innerHTML = `<i class="fas fa-music"></i>`;
+      audio.src = song.audio;
+      audio.load();
+      audio.play().catch(()=>{});
+      isPlaying = true;
+      playerPlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+      player.classList.add('open');
+      updateFavIcon();
+      if (!recentlyPlayed.includes(song.id)) recentlyPlayed.push(song.id);
+      if (recentlyPlayed.length > 20) recentlyPlayed.shift();
+      localStorage.setItem('afroRecent', JSON.stringify(recentlyPlayed));
+    }
+
+    function updateFavIcon() {
+      const isFav = favorites.includes(currentSongId);
+      favBtn.innerHTML = isFav ? '<i class="fas fa-heart" style="color:#ff2f92;"></i>' : '<i class="far fa-heart"></i>';
+    }
+
+    function renderLibrary() {
+      favCount.textContent = favorites.length;
+      playlistCount.textContent = playlists.length;
+      const allSongs = getAllSongs();
+      const favSongs = allSongs.filter(s => favorites.includes(s.id));
+      favoritesList.innerHTML = '';
+      if (favSongs.length === 0) { favoritesList.innerHTML = '<div class="text-muted">No favorites yet</div>'; return; }
+      favSongs.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'flex-between';
+        div.style.padding = '6px 0';
+        div.innerHTML = `<span>${s.title} - ${s.artist}</span><button class="btn-icon delete-fav" data-id="${s.id}" style="color:#ff2f92;"><i class="fas fa-heart"></i></button>`;
+        div.querySelector('.delete-fav').addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          favorites = favorites.filter(f => f !== id);
+          localStorage.setItem('afroFavorites', JSON.stringify(favorites));
+          renderLibrary();
+          updateFavIcon();
+          showToast('Removed from favorites');
+        });
+        favoritesList.appendChild(div);
+      });
+    }
+
+    function renderDownloads() {
+      const allSongs = getAllSongs();
+      const downloadedSongs = allSongs.filter(s => downloads.includes(s.id));
+      downloadsList.innerHTML = '';
+      if (downloadedSongs.length === 0) { downloadsList.innerHTML = '<div class="text-muted">No downloads yet</div>'; }
+      downloadedSongs.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'flex-between';
+        div.style.padding = '8px 0';
+        div.style.borderBottom = '1px solid #1f1830';
+        div.innerHTML = `
+          <div><span>${s.title}</span><br><span class="text-muted" style="font-size:0.7rem;">${s.artist} • 3.5 MB</span></div>
+          <div><button class="btn-icon play-download" data-id="${s.id}"><i class="fas fa-play"></i></button>
+          <button class="btn-icon delete-download" data-id="${s.id}"><i class="fas fa-trash" style="color:#ff2f92;"></i></button></div>
+        `;
+        downloadsList.appendChild(div);
+      });
+      downloadCount.textContent = downloadedSongs.length + ' songs';
+      storageEstimate.textContent = (downloadedSongs.length * 4.2).toFixed(1) + ' MB';
+      downloadsList.querySelectorAll('.play-download').forEach(b => b.addEventListener('click', (e) => {
+        const id = parseInt(e.currentTarget.dataset.id);
+        const allSongs = getAllSongs();
+        const song = allSongs.find(s => s.id === id);
+        if (song) playSong(song);
+      }));
+      downloadsList.querySelectorAll('.delete-download').forEach(b => {
+        b.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          downloads = downloads.filter(d => d !== id);
+          localStorage.setItem('afroDownloads', JSON.stringify(downloads));
+          renderDownloads();
+          showToast('Deleted download');
+        });
+      });
+      profileDownloads.textContent = downloads.length;
+    }
+
+    // ---- UPLOAD SYSTEM ----
+    function setupUpload() {
+      let uploadArea = document.getElementById('uploadArea');
+      if (!uploadArea) {
+        const searchScreen = document.getElementById('search');
+        const uploadHTML = `
+          <div class="upload-area" id="uploadArea">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Upload your own music<br><span class="text-muted" style="font-size:0.8rem;">MP3, WAV, or OGG</span></p>
+            <button class="btn-primary" id="uploadBtn"><i class="fas fa-plus"></i> Choose Files</button>
+            <input type="file" id="fileInput" accept=".mp3,.wav,.ogg" multiple>
+            <div class="upload-progress" id="uploadProgress"><div class="bar" id="progressBarUpload"></div></div>
+          </div>
+          <div class="uploaded-songs" id="uploadedSongsList"></div>
+        `;
+        const searchBar = document.querySelector('.search-bar');
+        searchBar.insertAdjacentHTML('afterend', uploadHTML);
+      }
+      
+      const fileInput = document.getElementById('fileInput');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const progressBarUpload = document.getElementById('progressBarUpload');
+      const uploadProgress = document.getElementById('uploadProgress');
+      const uploadedSongsList = document.getElementById('uploadedSongsList');
+
+      uploadBtn.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', (e) => {
+        const files = e.target.files;
+        if (files.length === 0) return;
+        
+        uploadProgress.style.display = 'block';
+        let processed = 0;
+        const total = files.length;
+
+        Array.from(files).forEach((file, index) => {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            const songId = 100 + uploadedSongs.length + index;
+            const songName = file.name.replace(/\.[^/.]+$/, "");
+            let title = songName;
+            let artistName = "Unknown Artist";
+            if (songName.includes(' - ')) {
+              const parts = songName.split(' - ');
+              artistName = parts[0].trim();
+              title = parts[1].trim() || title;
+            }
+            
+            const newSong = {
+              id: songId,
+              title: title,
+              artist: artistName,
+              cover: "🎤",
+              audio: event.target.result,
+              duration: "3:00",
+              album: "Uploads",
+              category: "Upload",
+              isUpload: true
+            };
+            
+            uploadedSongs.push(newSong);
+            
+            processed++;
+            const pct = (processed / total) * 100;
+            progressBarUpload.style.width = pct + '%';
+            
+            if (processed === total) {
+              setTimeout(() => {
+                uploadProgress.style.display = 'none';
+                progressBarUpload.style.width = '0%';
+                localStorage.setItem('afroUploads', JSON.stringify(uploadedSongs));
+                renderAllCards();
+                renderLibrary();
+                showToast(`Uploaded ${total} song${total > 1 ? 's' : ''}!`);
+                fileInput.value = '';
+                renderUploadedList();
+              }, 500);
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const uploadArea = document.getElementById('uploadArea');
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+      });
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+          fileInput.dispatchEvent(new Event('change'));
+        }
+      });
+
+      renderUploadedList();
+    }
+
+    function renderUploadedList() {
+      const container = document.getElementById('uploadedSongsList');
+      if (!container) return;
+      container.innerHTML = '';
+      if (uploadedSongs.length === 0) {
+        container.innerHTML = '<div class="text-muted" style="padding:8px 0;">No uploaded songs yet</div>';
+        return;
+      }
+      uploadedSongs.forEach((song) => {
+        const div = document.createElement('div');
+        div.className = 'uploaded-song';
+        div.innerHTML = `
+          <div class="info">
+            <div class="title">${song.title}</div>
+            <div class="artist">${song.artist}</div>
+          </div>
+          <div class="actions">
+            <button class="btn-icon play-upload" data-id="${song.id}"><i class="fas fa-play"></i></button>
+            <button class="btn-icon delete-upload" data-id="${song.id}"><i class="fas fa-trash" style="color:#ff2f92;"></i></button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+      container.querySelectorAll('.play-upload').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          const song = uploadedSongs.find(s => s.id === id);
+          if (song) playSong(song);
+        });
+      });
+      container.querySelectorAll('.delete-upload').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          // Delete from uploadedSongs
+          uploadedSongs = uploadedSongs.filter(s => s.id !== id);
+          localStorage.setItem('afroUploads', JSON.stringify(uploadedSongs));
+          renderAllCards();
+          renderLibrary();
+          renderUploadedList();
+          showToast('Deleted uploaded song');
+        });
+      });
+    }
+
+    // ---- navigation ----
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        const screenId = item.dataset.screen;
+        showScreen(screenId);
+        if (screenId === 'search') setupUpload();
+      });
+    });
+
+    // ---- RUN APP ----
+    runBtn.addEventListener('click', () => {
+      appContainer.classList.add('open');
+      runBtn.style.display = 'none';
+      setTimeout(() => {
+        splash.style.display = 'none';
+        showScreen('home');
+      }, 2000);
+      renderAllCards();
+      renderLibrary();
+      renderDownloads();
+      profileFavs.textContent = favorites.length;
+      profileDownloads.textContent = downloads.length;
+      profileUploads.textContent = uploadedSongs.length;
+      setupUpload();
+    });
+
+    // ---- player controls ----
+    closePlayer.addEventListener('click', () => player.classList.remove('open'));
+
+    playerPlayBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        audio.pause();
+        playerPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
+        isPlaying = false;
+      } else {
+        audio.play().catch(()=>{});
+        playerPlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        isPlaying = true;
+      }
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      if (audio.duration) {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        progressBar.value = pct;
+        currentTimeSpan.textContent = formatTime(audio.currentTime);
+        totalDurationSpan.textContent = formatTime(audio.duration);
+      }
+    });
+
+    progressBar.addEventListener('input', (e) => {
+      if (audio.duration) {
+        const pct = parseFloat(e.target.value) / 100;
+        audio.currentTime = pct * audio.duration;
+      }
+    });
+
+    function formatTime(sec) {
+      if (!sec) return '0:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      const allSongs = getAllSongs();
+      const idx = allSongs.findIndex(s => s.id === currentSongId);
+      if (idx > 0) playSong(allSongs[idx-1]);
+    });
+    nextBtn.addEventListener('click', () => {
+      const allSongs = getAllSongs();
+      const idx = allSongs.findIndex(s => s.id === currentSongId);
+      if (idx < allSongs.length-1) playSong(allSongs[idx+1]);
+    });
+
+    favBtn.addEventListener('click', () => {
+      if (!currentSongId) return;
+      if (favorites.includes(currentSongId)) {
+        favorites = favorites.filter(f => f !== currentSongId);
+        showToast('Removed from favorites');
+      } else {
+        favorites.push(currentSongId);
+        showToast('Added to favorites');
+      }
+      localStorage.setItem('afroFavorites', JSON.stringify(favorites));
+      updateFavIcon();
+      renderLibrary();
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      const allSongs = getAllSongs();
+      const song = allSongs.find(s => s.id === currentSongId);
+      if (!song) return;
+      document.getElementById('modalSongTitle').textContent = song.title;
+      document.getElementById('modalArtist').textContent = song.artist;
+      modal.classList.add('open');
+    });
+
+    closeModalBtn.addEventListener('click', () => modal.classList.remove('open'));
+    confirmDownloadBtn.addEventListener('click', () => {
+      const allSongs = getAllSongs();
+      const song = allSongs.find(s => s.id === currentSongId);
+      if (song && !downloads.includes(song.id)) {
+        downloads.push(song.id);
+        localStorage.setItem('afroDownloads', JSON.stringify(downloads));
+        showToast('Downloaded ' + song.title);
+        renderDownloads();
+      } else {
+        showToast('Already downloaded');
+      }
+      modal.classList.remove('open');
+    });
+
+    // ---- ENHANCED SEARCH with filterSongs function ----
+    function filterSongs(searchTerm) {
+      const allSongs = getAllSongs();
+      if (!searchTerm || searchTerm.trim() === '') {
+        searchResults.innerHTML = '<div class="text-muted">Type to search...</div>';
+        return;
+      }
+      const filtered = allSongs.filter(s => 
+        s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        s.artist.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      if (filtered.length === 0) {
+        searchResults.innerHTML = '<div class="text-muted">No results found</div>';
+        return;
+      }
+      searchResults.innerHTML = filtered.map(s => 
+        `<div class="flex-between" style="padding:6px 0;border-bottom:1px solid #1f1830;">
+          <span>${s.title} - ${s.artist}</span>
+          <button class="btn-icon play-card" data-id="${s.id}"><i class="fas fa-play"></i></button>
+        </div>`
+      ).join('');
+      searchResults.querySelectorAll('.play-card').forEach(b => {
+        b.addEventListener('click', (e) => {
+          const id = parseInt(e.currentTarget.dataset.id);
+          const allSongs = getAllSongs();
+          const song = allSongs.find(s => s.id === id);
+          if (song) playSong(song);
+        });
+      });
+    }
+
+    // Attach search input listener
+    searchInput.addEventListener('input', function(e) {
+      filterSongs(e.target.value);
+    });
+
+    // ---- DOWNLOAD FUNCTION (async) ----
+    async function downloadSong(songUrl, fileName) {
+      try {
+        const response = await fetch(songUrl, {
+          mode: 'cors'
+        });
+        const blob = await response.blob();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName || 'song.mp3';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        showToast('Download started!');
+      } catch (error) {
+        console.error('Download failed:', error);
+        // Fallback: open in new tab
+        window.open(songUrl, '_blank');
+        showToast('Opening in new tab...');
+      }
+    }
+
+    // ---- SAVE SONG TO PLAYLIST (localStorage) ----
+    function saveSongToPlaylist(songData) {
+      let playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+      // Check if song already exists
+      if (!playlist.some(s => s.id === songData.id)) {
+        playlist.push(songData);
+        localStorage.setItem('playlist', JSON.stringify(playlist));
+        showToast('Added to playlist!');
+        renderLibrary();
+      } else {
+        showToast('Song already in playlist');
+      }
+    }
+
+    // ---- DELETE SONG FROM PLAYLIST ----
+    function deleteSongFromPlaylist(songId) {
+      let playlist = JSON.parse(localStorage.getItem('playlist')) || [];
+      playlist = playlist.filter(song => song.id !== songId);
+      localStorage.setItem('playlist', JSON.stringify(playlist));
+      renderLibrary();
+      showToast('Removed from playlist');
+    }
+
+    // ---- EXTRA: Add to playlist from player ----
+    document.getElementById('addPlaylistBtn').addEventListener('click', () => {
+      const allSongs = getAllSongs();
+      const song = allSongs.find(s => s.id === currentSongId);
+      if (song) {
+        saveSongToPlaylist(song);
+      } else {
+        showToast('No song playing');
+      }
+    });
+
+    // ---- OPTIONS CARD HANDLER ----
+    document.querySelectorAll('.options-card').forEach(b => {
+      b.addEventListener('click', (e) => {
+        const id = parseInt(e.currentTarget.dataset.id);
+        const allSongs = getAllSongs();
+        const song = allSongs.find(s => s.id === id);
+        if (song) {
+          showToast(`Options for ${song.title} - Add to playlist?`);
+          // Quick add to playlist via options
+          saveSongToPlaylist(song);
+        }
+      });
+    });
+
+    audio.addEventListener('ended', () => {
+      isPlaying = false;
+      playerPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
+    });
+
+  })();
+</script>
+</body>
+</html>
